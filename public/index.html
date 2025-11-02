@@ -3,242 +3,425 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" href="./bot.ico" type="image/x-icon" />
+
   <title>Hybrid Chatbot</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: "Inter", system-ui, sans-serif;
-      background: #0e1117;
-      color: #e4e6eb;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
+    * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    /* --- LOGIN SCREEN --- */
-    #login-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      background: #1a1d23;
-      padding: 40px 60px;
-      border-radius: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
-      animation: fadeIn 0.6s ease;
-    }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: #0e1117;
+  color: #e4e6eb;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
 
-    #login-screen h2 {
-      color: #fff;
-      font-weight: 600;
-    }
+/* --- LOGIN SCREEN --- */
+#login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: #1a1d23;
+  padding: 40px 60px;
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.6s ease;
+  width: 100%;
+  max-width: 400px;
+}
 
-    #login-screen input {
-      width: 260px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: none;
-      background: #2a2d34;
-      color: white;
-      font-size: 1em;
-      outline: none;
-    }
+#login-screen h2 {
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+}
 
-    #login-screen button {
-      background: #007bff;
-      color: #fff;
-      border: none;
-      padding: 12px 40px;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
+#login-screen input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: none;
+  background: #2a2d34;
+  color: white;
+  font-size: 1em;
+  outline: none;
+}
 
-    #login-screen button:hover {
-      background: #0066e0;
-    }
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
 
-    .password-wrapper {
-      position: relative;
-      width: 260px;
-    }
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #aaa;
+  font-size: 0.9em;
+}
 
-    .password-wrapper input {
-      width: 100%;
-      padding-right: 40px;
-    }
+#login-screen button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 12px 40px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: 100%;
+}
 
-    .toggle-password {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: #aaa;
-      font-size: 0.9em;
-    }
+#login-screen button:hover {
+  background: #0066e0;
+}
 
-    #remember {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.9em;
-      color: #ccc;
-    }
+/* --- CHAT APP --- */
+#chat-app {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
 
-    #chat-app {
-      display: none;
-      flex-direction: column;
-      height: 100vh;
-      width: 100%;
-    }
+header {
+  background: #1a1d23;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #2a2d34;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 
-    header {
-      background: #1a1d23;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #2a2d34;
-    }
+header h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-    header h1 {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #fff;
-    }
+header h1 img {
+  height: 36px;
+}
 
-    .tab-buttons {
-      display: flex;
-      gap: 8px;
-    }
+.tab-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
-    .tab-buttons button {
-      background: #2a2d34;
-      border: none;
-      color: #ccc;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.25s ease;
-    }
+.tab-buttons button {
+  background: #2a2d34;
+  border: none;
+  color: #ccc;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
 
-    .tab-buttons button.active {
-      background: #007bff;
-      color: #fff;
-    }
+.tab-buttons button.active {
+  background: #007bff;
+  color: #fff;
+}
 
-    .tab-buttons button:hover {
-      background: #3a3d45;
-    }
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
 
-    .chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+/* --- AI CHAT --- */
+.chat-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
 
-    .chat-body {
-      flex: 1;
-      padding: 24px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      scroll-behavior: smooth;
-    }
+.message {
+  max-width: 70%;
+  padding: 14px 18px;
+  border-radius: 16px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  animation: fadeInUp 0.3s ease;
+}
 
-    .message {
-      max-width: 70%;
-      padding: 14px 18px;
-      border-radius: 16px;
-      line-height: 1.5;
-      word-wrap: break-word;
-      animation: fadeInUp 0.3s ease;
-    }
+.user {
+  align-self: flex-end;
+  background: #007bff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
 
-    .user { align-self: flex-end; background: #007bff; color: white; border-bottom-right-radius: 4px; }
-    .bot { align-self: flex-start; background: #1f232b; color: #e4e6eb; border-bottom-left-radius: 4px; }
+.bot {
+  align-self: flex-start;
+  background: #1f232b;
+  color: #e4e6eb;
+  border-bottom-left-radius: 4px;
+}
 
-    .chat-input {
-      display: flex;
-      padding: 16px 24px;
-      border-top: 1px solid #2a2d34;
-      background: #1a1d23;
-    }
+.chat-input {
+  display: flex;
+  padding: 16px 24px;
+  border-top: 1px solid #2a2d34;
+  background: #1a1d23;
+}
 
-    .chat-input input {
-      flex: 1;
-      background: #2a2d34;
-      border: none;
-      padding: 14px 16px;
-      border-radius: 12px;
-      color: white;
-      font-size: 1em;
-      outline: none;
-    }
+.chat-input input {
+  flex: 1;
+  background: #2a2d34;
+  border: none;
+  padding: 14px 16px;
+  border-radius: 12px;
+  color: white;
+  font-size: 1em;
+  outline: none;
+}
 
-    .chat-input button {
-      background: #007bff;
-      border: none;
-      color: white;
-      margin-left: 10px;
-      padding: 0 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
+.chat-input button {
+  background: #007bff;
+  border: none;
+  color: white;
+  margin-left: 10px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
 
-    .chat-input button:hover { background: #0066e0; }
+.chat-input button:hover {
+  background: #0066e0;
+}
 
-    #group-chat { display: none; flex-direction: column; height: 100%; }
-    #client-total { text-align: center; font-size: 0.9em; color: #999; margin-bottom: 10px; }
+/* --- GROUP CHAT --- */
+#group-chat {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+}
 
-    #message-container {
-      list-style: none;
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+#client-total {
+  text-align: center;
+  font-size: 0.9em;
+  color: #999;
+  margin: 8px 0;
+}
 
-    li.message-left, li.message-right { max-width: 70%; word-wrap: break-word; }
-    li.message-left { align-self: flex-start; }
-    li.message-right { align-self: flex-end; }
+#message-container {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-    li.message-left p, li.message-right p {
-      background: #1f232b;
-      color: #e4e6eb;
-      padding: 12px 16px;
-      border-radius: 16px;
-    }
+li.message-left,
+li.message-right {
+  max-width: 70%;
+  word-wrap: break-word;
+}
 
-    li.message-right p { background: #007bff; color: white; }
-    li.message-feedback { text-align: center; color: #777; font-style: italic; font-size: 0.85em; }
+li.message-left {
+  align-self: flex-start;
+}
 
-    .cursor {
-      display: inline-block;
-      width: 6px;
-      background-color: #ccc;
-      margin-left: 2px;
-      animation: blink 1s infinite;
-    }
+li.message-right {
+  align-self: flex-end;
+}
 
-    @keyframes blink { 0%,50%{opacity:1;} 50.01%,100%{opacity:0;} }
-    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-    @keyframes fadeInUp { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+li.message-left p,
+li.message-right p {
+  background: #1f232b;
+  color: #e4e6eb;
+  padding: 12px 16px;
+  border-radius: 16px;
+}
+
+li.message-right p {
+  background: #007bff;
+  color: white;
+}
+
+li.message-feedback {
+  text-align: center;
+  color: #777;
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.cursor {
+  display: inline-block;
+  width: 6px;
+  background-color: #ccc;
+  margin-left: 2px;
+  animation: blink 1s infinite;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  50.01%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- RESPONSIVE --- */
+
+/* Tablets */
+@media (max-width: 1024px) {
+  header {
+    padding: 12px 16px;
+  }
+
+  .chat-body {
+    padding: 16px;
+  }
+
+  .message {
+    max-width: 80%;
+  }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+  body {
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  #login-screen {
+    height: auto;
+    padding: 24px;
+    margin-top: 60px;
+    border-radius: 14px;
+    box-shadow: none;
+    width: 90%;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  header h1 {
+    font-size: 1rem;
+  }
+
+  .chat-body {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .message {
+    max-width: 90%;
+    font-size: 0.9em;
+    padding: 10px 12px;
+  }
+
+  .chat-input {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .chat-input input {
+    width: 100%;
+    margin: 0;
+  }
+
+  .chat-input button {
+    width: 100%;
+    margin-left: 0;
+    padding: 12px;
+  }
+
+  #message-form {
+    flex-direction: column;
+  }
+
+  #name-input {
+    width: 100% !important;
+    margin-bottom: 8px;
+  }
+
+  li.message-left p,
+  li.message-right p {
+    font-size: 0.9em;
+    padding: 10px 12px;
+  }
+}
+
+/* Small Phones */
+@media (max-width: 430px) {
+  header h1 img {
+    height: 28px;
+  }
+
+  .tab-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tab-buttons button {
+    flex: 1;
+    text-align: center;
+    font-size: 0.9em;
+    padding: 6px 10px;
+  }
+
+  .message {
+    font-size: 0.85em;
+  }
+
+  .chat-input input,
+  .chat-input button {
+    font-size: 0.9em;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -251,16 +434,17 @@
       <input type="password" id="password" placeholder="Password" />
       <span class="toggle-password" onclick="togglePassword()">👁️</span>
     </div>
-    <label id="remember">
-      <input type="checkbox" id="rememberMe" /> Remember me
-    </label>
     <button onclick="login()">Login</button>
   </div>
 
   <!-- CHAT APP -->
   <div id="chat-app">
     <header>
-      <h1>Hybrid Chatbot</h1>
+      <h1>
+  <img src="./bot.ico" alt="Logo" style="height: 40px; vertical-align: middle; margin-right: 10px;">
+  Hybrid Chatbot
+</h1>
+
       <div class="tab-buttons">
         <button id="aiTab" class="active" onclick="switchTab('ai')"><b>Ask AI</b></button>
         <button id="groupTab" onclick="switchTab('group')"><b>Mentor</b></button>
@@ -270,7 +454,7 @@
     <div class="chat-container">
       <!-- AI Chat -->
       <div id="ai-chat" class="chat-body">
-        <div class="bot message">👋 Hi! I’m Bot. How can I help you today?</div>
+        <div class="bot message">👋 Hi! I’m Hybrid Chatbot. How can I help you today?</div>
       </div>
       <div class="chat-input" id="ai-input">
         <input id="userInput" placeholder="Ask AI..." onkeypress="if(event.key==='Enter') sendMessage()" />
@@ -279,7 +463,7 @@
 
       <!-- Group Chat -->
       <div id="group-chat">
-        <div id="client-total">Total Clients: 0</div>
+        <div id="client-total"> </div>
         <ul id="message-container"></ul>
         <form id="message-form" class="chat-input">
           <input id="name-input" placeholder="Your name" style="width:30%; margin-right:8px; background:#2a2d34;">
@@ -294,7 +478,7 @@
     // --- LOGIN LOGIC ---
     const loginScreen = document.getElementById("login-screen");
     const chatApp = document.getElementById("chat-app");
-    const validUsers = { admin: "1234", demo: "demo123", user: "password" }; // example user list
+    const validUsers = { mentor: "00", sawan: "04", ritesh: "49", shivam: "47", bhaskar: "15" }; // example user list
 
     function togglePassword() {
       const pwd = document.getElementById("password");
@@ -302,20 +486,35 @@
     }
 
     function login() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const remember = document.getElementById("rememberMe").checked;
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  
 
-      if (!username || !password) return alert("Please enter both username and password.");
+  if (!username || !password) return alert("Please enter both username and password.");
 
-      if (validUsers[username] && validUsers[username] === password) {
-        if (remember) localStorage.setItem("askbotUser", username);
-        document.getElementById("name-input").value = username;
-        showChat();
-      } else {
-        alert("Invalid username or password ❌");
-      }
+  if (validUsers[username] && validUsers[username] === password) {
+    
+    document.getElementById("name-input").value = username;
+    showChat();
+
+      // Update bot greeting with username
+    const chatBody = document.getElementById("ai-chat");
+    const botMessage = chatBody.querySelector(".bot.message");
+    if (botMessage && username !== "mentor") {
+      botMessage.innerHTML = `👋 Hi ${username}! I'm a Hybrid Chatbot. How can I help you today?`;
     }
+    // Set button text based on role
+    const groupTabButton = document.getElementById('groupTab');
+    if (username === "mentor") {
+      groupTabButton.innerHTML = '<b>Student</b>';
+    } else {
+      groupTabButton.innerHTML = '<b>Mentor</b>';
+    }
+
+  } else {
+    alert("Invalid username or password ❌");
+  }
+}
 
     function showChat() {
       loginScreen.style.display = "none";
@@ -427,8 +626,8 @@
       addMessageToUI(true, data);
       messageInput.value = "";
     });
-
-    socket.on("clients-total", (n) => (clientsTotal.innerText = `Total Clients: ${n}`));
+    
+    socket.on("clients-total", (n) => (clientsTotal.innerText = `Total Students: ${n}`));
     socket.on("chat-message", (data) => addMessageToUI(false, data));
 
     function addMessageToUI(isOwn, data) {
